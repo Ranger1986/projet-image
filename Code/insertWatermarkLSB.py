@@ -21,6 +21,7 @@ def hide_pattern_per_line(content : list[list[str]], pattern: str)->list[list[st
     return contentout
 
 if  __name__ == "__main__":
+    assert len(sys.argv)==3, f"{sys.argv[0]} fileToWatermark.pgm watermarkedFile.pgm"
     filein = sys.argv[1]
     fileout = sys.argv[2]
     contentin = pgm.read_pgm(filein)

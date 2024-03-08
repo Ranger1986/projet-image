@@ -43,6 +43,7 @@ def find_modification(content : list[list[str]], pattern: str)->list[list[str]]:
     return contentout
 
 if  __name__ == "__main__":
+    assert len(sys.argv)==3, f"{sys.argv[0]} watermarkedFile.pgm falseTrace.pgm"
     file = sys.argv[1]
     fileout = sys.argv[2]
     content = pgm.read_pgm(file)
