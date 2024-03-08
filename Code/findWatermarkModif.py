@@ -30,7 +30,7 @@ def find_modification(content : list[list[str]], pattern: str)->list[list[str]]:
         i=0
         rowout=[]
         for number in row[:encodable_length]:
-            if number[-1]!=pattern_to_hide[i]:
+            if number[-1]==pattern_to_hide[i]:
                 rowout.append(bin(0)[2:])
             else:
                 rowout.append(bin(255)[2:])

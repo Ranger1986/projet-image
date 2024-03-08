@@ -1,6 +1,6 @@
 import sys
 import pgm
-
+import math
 def hide_pattern_per_line(content : list[list[str]], pattern: str)->list[list[str]]:
     pattern_to_hide=""
     for char in pattern:
@@ -20,11 +20,21 @@ def hide_pattern_per_line(content : list[list[str]], pattern: str)->list[list[st
         contentout.append(rowout)
     return contentout
 
+def PSNR(original : list[list[str]], changed : list[list[str]])->float:
+    EQM=0
+    for i in range(len(original)):
+        for j in range(len(original[i])):
+            EQM+=pow(int(original[i][j],2)-int(changed[i][j],2),2)
+    EQM/=len(original)*len(original[0])
+    PSNR = 10 * math.log10(pow(255, 2) /EQM)
+    return PSNR
+    
+
 if  __name__ == "__main__":
     assert len(sys.argv)==3, f"{sys.argv[0]} fileToWatermark.pgm watermarkedFile.pgm"
     filein = sys.argv[1]
     fileout = sys.argv[2]
     contentin = pgm.read_pgm(filein)
     contentout = hide_pattern_per_line(contentin, "PIERRE")
-    print(contentout[0][0])
+    print(PSNR(contentin,contentout))
     pgm.write_pgm(fileout, contentout)
