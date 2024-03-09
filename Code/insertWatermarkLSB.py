@@ -2,6 +2,15 @@ import sys
 import pgm
 import math
 def hide_pattern_per_line(content : list[list[str]], pattern: str)->list[list[str]]:
+    """cache le pattern dans les Leasts Significants Bits du pattern
+
+    Args:
+        content (list[list[str]]): image en binaire
+        pattern (str): le texte a cacher à chaque ligne
+
+    Returns:
+        list[list[str]]: image contenant le watermark
+    """
     pattern_to_hide=""
     for char in pattern:
         pattern_to_hide+=bin(ord(char))[2:]
@@ -21,6 +30,15 @@ def hide_pattern_per_line(content : list[list[str]], pattern: str)->list[list[st
     return contentout
 
 def PSNR(original : list[list[str]], changed : list[list[str]])->float:
+    """Calcul le PSNR entre deux images en binaire
+
+    Args:
+        original (list[list[str]]): image originale
+        changed (list[list[str]]): image changée
+
+    Returns:
+        float: PSNR
+    """
     EQM=0
     for i in range(len(original)):
         for j in range(len(original[i])):

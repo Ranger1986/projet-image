@@ -1,4 +1,11 @@
 def read_pgm(nomFichier : str)->list[list[str]]:
+    """Importe une image pgm
+    Args:
+        nomFichier (str): le path relatif pour accéder au fichier
+
+    Returns:
+        list[list[str]]: une image binaire
+    """
     fichier = open(nomFichier,"rb")
     header = fichier.readline()
     assert header[:2] == b'P5'
@@ -19,6 +26,12 @@ def read_pgm(nomFichier : str)->list[list[str]]:
     return content
 
 def write_pgm(nomFichier : str, content : list[list[str]])->None:
+    """Exporte une image pgm
+
+    Args:
+        nomFichier (str): le path relatif pour ecrire l'image
+        content (list[list[str]]): une image binaire
+    """
     #function corrected by chatGPT
     with open(nomFichier, "wb") as fichier:
         fichier.write(b'P5\n')

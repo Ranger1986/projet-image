@@ -1,7 +1,17 @@
 import sys
 import pgm
-    
+
+
 def is_modified(content : list[list[str]], pattern: str)->bool:
+    """Trouve si l'image a ete modifie
+
+    Args:
+        content (list[list[str]]): image en binaire
+        pattern (str): texte caché dans l'image
+
+    Returns:
+        bool: si l'image a été modifiée
+    """
     pattern_to_hide=""
     for char in pattern:
         pattern_to_hide+=bin(ord(char))[2:]
@@ -19,6 +29,15 @@ def is_modified(content : list[list[str]], pattern: str)->bool:
     return False
 
 def find_modification(content : list[list[str]], pattern: str)->list[list[str]]:
+    """Trouve les parties modifiées de l'image
+
+    Args:
+        content (list[list[str]]): image en binaire
+        pattern (str): texte caché dans l'image
+
+    Returns:
+        list[list[str]]: image de la trace des modifications en binaire
+    """
     pattern_to_hide=""
     for char in pattern:
         pattern_to_hide+=bin(ord(char))[2:]
