@@ -12,44 +12,42 @@ def read_png(filename: str) -> None:
                    depends on the image mode (RGB, grayscale, etc.).
     """
 
-    try:
-        with Image.open(filename) as image:
-            # Access pixel data based on image mode
-            mode = image.mode
-            if mode == 'RGB':
-                content = [[r, g, b] for r, g, b in image.getdata()]
-            elif mode == 'L':
-                content = [[pixel] for pixel in image.getdata()]
-            else:
-                raise NotImplementedError(f"Image mode {mode} not supported")
-    except FileNotFoundError:
-        raise FileNotFoundError(f"File not found: {filename}")
-
-    return content
+    with Image.open(filename) as img:
+        # Convert the image to RGBA if it's not already to handle transparency
+        img = img.convert('RGBA')
+        data = np.array(img)
+        # Check if the image is grayscale (only one channel)
+        if len(data.shape) == 2 or (len(data.shape) == 3 and data.shape[2] == 1):
+            # Return as a list of lists (each row is a list)
+            return data.tolist()
+        else:  # For RGB or RGBA images
+            # Discard the alpha channel if present and return as list of lists of lists
+            return data[:, :, :3].tolist()
 
 
 
 
-def write_png(filename: str, content: list[list[int]]) -> None:
-    """Saves pixel data as a PNG image.
 
-    Args:
-        filename (str): The path to save the PNG image.
-        content (list[list[int]]): A list of lists containing pixel data.
-            - For RGB images, each inner list should have three integers (0-255)
-              representing red, green, and blue intensities.
-            - For grayscale images, each inner list should have one integer (0-255)
-              representing the grayscale intensity.
 
-    Raises:
-        ValueError: If the pixel data has incorrect dimensions or values.
-    """
+def write_png(filename: str, content: list) -> None:
+    # Assuming the first element's structure indicates the content's structure
+    if isinstance(content[0][0], int):  # This suggests a grayscale image
+        mode = 'L'
+        height = len(content)
+        array_content = np.array(content, dtype=np.uint8).reshape((height, -1))
+    elif isinstance(content[0][0], list) and len(content[0][0]) == 3:  # RGB
+        mode = 'RGB'
+        array_content = np.array(content, dtype=np.uint8)
+    else:
+        raise ValueError("Unsupported image format.")
 
-    if len(content[0]) != 3 and len(content[0]) != 1:
-        raise ValueError("Image must be RGB (3 channels) or grayscale (1 channel).")
-
-    height = len(content)
-    width = len(content[0])
-    mode = 'RGB' if len(content[0]) == 3 else 'L'
-    image = Image.fromarray(np.asarray(content), mode)
+    image = Image.fromarray(array_content, mode=mode)
     image.save(filename, format='PNG')
+
+
+if __name__ == "__main__":
+    # Assuming the path "../s.png" is correct and accessible
+    content = read_png("./s.png")
+    # Assuming you want to save the output with a filename, adding ".png" to your provided "../F"
+    write_png("./F.png", content)
+
