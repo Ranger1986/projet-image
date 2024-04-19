@@ -50,5 +50,5 @@ def detect_jpeg_ghosts(image_path, min_quality=30, max_quality=130, step=5, save
 
 if __name__ == "__main__":
     # Usage
-    path = '/home/aissa/Desktop/PROJECT COMP/projet-image/Code/hi.jpg'  # Specify the path to your image
+    path = '/home/piline/programs/projet-image/DSO-1/splicing-99.png'  # Specify the path to your image
     detect_jpeg_ghosts(path)
