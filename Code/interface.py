@@ -75,22 +75,52 @@ class ImageProcessorApp(tk.Tk):
         self.watermark_psnr=tk.Label(self.watermark, text="PSNR : ")
         self.notebook.add( self.watermark, text="watermark")
 
-        #Notebook1 Layout
+        #Notebook2 Layout
         self.watermark_label.grid(row=0, column=0)
         self.watermark_text.grid(row=0, column=1)
         self.watermark_button1.grid(row=1, column=0)
         self.watermark_button2.grid(row=1, column=1)
         self.watermark_psnr.grid(row=2, column=0, columnspan=2)
 
-        #Notebook1 widget
+        #Notebook2 widget
         self.ML=tk.Canvas(self, height=0,width=0)
         self.ML_button=tk.Button(self.ML, text="Check", command=self.machine_learning)
         self.ML_result=tk.Label(self.ML, text="")
+        self.ML_TP=tk.Label(self.ML, text="TP : 39,5%")
+        self.ML_TN=tk.Label(self.ML, text="TN : 41,5%")
+        self.ML_FP=tk.Label(self.ML, text="FP : 8,5%")
+        self.ML_FN=tk.Label(self.ML, text="FN : 10,%")
         self.notebook.add( self.ML, text="machine learning")
-
-        #Notebook1 Layout
+        #Notebook2 Layout
         self.ML_button.grid(row=0, column=0)
-        self.ML_result.grid(row=0, column=1)
+        self.ML_result.grid(row=1, column=0)
+        self.ML_TP.grid(row=2, column=0)
+        self.ML_TN.grid(row=3, column=0)
+        self.ML_FP.grid(row=4, column=0)
+        self.ML_FN.grid(row=5, column=0)
+        
+        #Notebook3 widget
+        self.plan=tk.Canvas(self, height=0,width=0)
+        self.plan_button=tk.Button(self.plan, text="Change", command=self.change_plan)
+
+        plans = (('R', 'R'),
+         ('G', 'G'),
+         ('B', 'B'),
+         ('Luminance', 'L'))
+        rowcount = 0
+        self.plan_var=tk.StringVar()
+        for plan in plans:
+            r = ttk.Radiobutton(
+                self.plan,
+                text=plan[0],
+                value=plan[1],
+                variable=self.plan_var
+            )
+            r.grid(row=rowcount,column=0)
+            rowcount+=1
+        self.plan_button.grid(row=rowcount,column=0)
+        self.notebook.add(self.plan, text="Plan")
+
 
         # Layout
         self.left_image_label.grid(row=0, column=0)
@@ -160,7 +190,7 @@ class ImageProcessorApp(tk.Tk):
 
     def display_image(self, image, label_widget):
         # Resize image to fit label
-        image = image.resize((200, 200))
+        image = image.resize((400, 400))
         photo = ImageTk.PhotoImage(image)
         label_widget.config(image=photo)
         label_widget.image = photo  # Keep a reference to prevent garbage collection
@@ -178,14 +208,35 @@ class ImageProcessorApp(tk.Tk):
 
 
         clf = load('clf.joblib')
-        print(clf)
-        print(type(clf))
         # Use the trained SVM classifier to predict the label of the image
         predicted_label = clf.predict([combined_features])
         if predicted_label:
             self.ML_result.config(text="Fausse Image")
         else:
             self.ML_result.config(text="Vrai Image")
+
+    def change_plan(self):
+        image = np.array(self.original_image)
+        mask = np.zeros_like(image[:,:,0], dtype=np.uint8)
+        match self.plan_var.get():
+            case "R": 
+                for i in range(image.shape[0]):
+                    for j in range(image.shape[1]):
+                        mask[i,j] = image[i, j, 0]
+            case "G":
+                for i in range(image.shape[0]):
+                    for j in range(image.shape[1]):
+                        mask[i,j] = image[i, j, 1]
+            case "B":
+                for i in range(image.shape[0]):
+                    for j in range(image.shape[1]):
+                        mask[i,j] = image[i, j, 2]
+            case "L":
+                for i in range(image.shape[0]):
+                    for j in range(image.shape[1]):
+                        mask[i,j] = 0.2126 *image[i, j, 0] + 0.7152 *image[i, j, 1] + 0.0722 *image[i, j, 1]
+        self.new_image=Image.fromarray(mask)
+        self.display_image(self.new_image, self.right_image_label)
             
 
 if __name__ == "__main__":
