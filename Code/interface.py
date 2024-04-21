@@ -1,8 +1,53 @@
 import tkinter as tk
 from tkinter import filedialog, ttk
-from PIL import Image, ImageTk, ImageOps
+from PIL import Image, ImageTk, ImageOps, ImageChops, ImageEnhance
 import numpy as np
 import math
+
+from io import BytesIO
+from skimage.feature import graycomatrix, graycoprops
+from skimage.color import rgb2hsv
+from skimage.exposure import histogram
+from joblib import load
+from sklearn.svm import SVC
+
+def rgb2gray(rgb):
+    gray_image = np.dot(rgb[..., :3], [0.2989, 0.5870, 0.1140])
+    # Ensure the output is of the correct type (unsigned integer)
+    gray_image = np.clip(gray_image, 0, 255).astype(np.uint8)
+    return gray_image
+
+def convert_to_ela_image(image, quality):
+    if isinstance(image, np.ndarray):
+        image = Image.fromarray(image.astype('uint8'), 'RGB')
+    image = image.convert('RGB')
+    byte_stream = BytesIO()
+    image.save(byte_stream, 'JPEG', quality=quality)
+    byte_stream.seek(0)  
+    resaved_image = Image.open(byte_stream)
+    resaved_image.load()  
+    byte_stream.close()  
+    ela_image = ImageChops.difference(image, resaved_image)
+    ela_image = ela_image.convert('RGB')
+    extrema = ela_image.getextrema()
+    max_diff = max([ex[1] for ex in extrema])
+    scale = 255.0 / max_diff
+    return ImageEnhance.Brightness(ela_image).enhance(scale)
+
+
+def extract_texture_features(image):
+    gray_image = rgb2gray(np.array(image))  # Convert PIL image to numpy array and then to grayscale
+    glcm = graycomatrix(gray_image, distances=[5], angles=[0], levels=256, symmetric=True, normed=True)
+    features = [graycoprops(glcm, prop).flatten() for prop in ['contrast', 'dissimilarity', 'homogeneity', 'energy', 'correlation', 'ASM']]
+    return np.hstack(features)
+
+def extract_color_features(image):
+    hsv_image = rgb2hsv(np.array(image))
+    h_hist, _ = histogram(hsv_image[..., 0], nbins=256)
+    s_hist, _ = histogram(hsv_image[..., 1], nbins=256)
+    v_hist, _ = histogram(hsv_image[..., 2], nbins=256)
+    color_features = np.concatenate([h_hist / h_hist.sum(), s_hist / s_hist.sum(), v_hist / v_hist.sum()])
+    return color_features
 
 class ImageProcessorApp(tk.Tk):
     def __init__(self):
@@ -36,6 +81,16 @@ class ImageProcessorApp(tk.Tk):
         self.watermark_button1.grid(row=1, column=0)
         self.watermark_button2.grid(row=1, column=1)
         self.watermark_psnr.grid(row=2, column=0, columnspan=2)
+
+        #Notebook1 widget
+        self.ML=tk.Canvas(self, height=0,width=0)
+        self.ML_button=tk.Button(self.ML, text="Check", command=self.machine_learning)
+        self.ML_result=tk.Label(self.ML, text="")
+        self.notebook.add( self.ML, text="machine learning")
+
+        #Notebook1 Layout
+        self.ML_button.grid(row=0, column=0)
+        self.ML_result.grid(row=0, column=1)
 
         # Layout
         self.left_image_label.grid(row=0, column=0)
@@ -109,6 +164,29 @@ class ImageProcessorApp(tk.Tk):
         photo = ImageTk.PhotoImage(image)
         label_widget.config(image=photo)
         label_widget.image = photo  # Keep a reference to prevent garbage collection
+    
+
+    def machine_learning(self):
+        image=np.array(self.original_image)
+        image = convert_to_ela_image(image, quality=90)
+        # Extract texture features
+        texture_features = extract_texture_features(image)
+        # Extract color features (if added)
+        color_features = extract_color_features(image)
+        # Combine texture and color features
+        combined_features = np.concatenate([texture_features, color_features])
+
+
+        clf = load('clf.joblib')
+        print(clf)
+        print(type(clf))
+        # Use the trained SVM classifier to predict the label of the image
+        predicted_label = clf.predict([combined_features])
+        if predicted_label:
+            self.ML_result.config(text="Fausse Image")
+        else:
+            self.ML_result.config(text="Vrai Image")
+            
 
 if __name__ == "__main__":
     app = ImageProcessorApp()
